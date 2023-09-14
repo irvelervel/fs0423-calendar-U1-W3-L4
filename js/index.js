@@ -124,6 +124,17 @@ const createDays = function (numberOfDays) {
       // l'ultima cosa che manca è trasportare il valore della cella che ho cliccato
       // in basso a sx, nella sezione "Meeting Day" (ovvero il div con id="newMeetingDay")
       changeMeetingDaySection(i)
+
+      // sempre al click della giornata, nel caso CI SIANO eventi da mostrare
+      // dobbiamo fare comparire la lista
+      if (appointments[i].length > 0) {
+        // ci sono eventi da mostrare!
+        showAppointments(i)
+      } else {
+        // se non ci sono eventi sul giorno selezionato, la lista deve sparire
+        const appointementsDiv = document.getElementById('appointments')
+        appointementsDiv.style.display = 'none'
+      }
     })
 
     const cellValue = document.createElement('h3')
@@ -140,15 +151,61 @@ const createDays = function (numberOfDays) {
   }
 }
 
+const showAppointments = function (indexOfTheDay) {
+  // questa funzione servirà a popolare la <ul> con gli eventi del giorno, nel caso ce ne siano,
+  // ed eventualmente mostrare la sezione "appointments"
+
+  // passaggi:
+  // 1) prelevare gli eventi dal cassetto giusto, ovvero di indexOfTheDay
+  const appointmentsForThisDay = appointments[indexOfTheDay] // ["14:30 - Q&A", "17:00 - Debrief"]
+  // 2) seleziono la <ul> dalla pagina, quella da riempire con gli appuntamenti
+  const appointmentsList = document.querySelector('#appointments ul') // <ul></ul>
+  // 3) ciclare appointmentsForThisDay e creare un <li> per ciascuno di essi, e appenderlo alla lista
+
+  // prima di riempire la <ul> con gli <li> necessari, SVUOTO LA UL
+  appointmentsList.innerHTML = ''
+
+  appointmentsForThisDay.forEach((appointment) => {
+    const newLi = document.createElement('li')
+    newLi.innerText = appointment // "14:30 - Q&A"
+    appointmentsList.appendChild(newLi)
+  })
+
+  // la lista ora è piena, ma è ancora nascosta! togliamole il display: none
+  const appointementsDiv = document.getElementById('appointments')
+  appointementsDiv.style.display = 'block'
+}
+
 const handleFormSubmit = function (e) {
   e.preventDefault()
   console.log('il form sta venendo inviato!')
   // cosa facciamo adesso?
   // 1) raccogliamo il giorno selezionato
+  const selectedDay = document.getElementById('newMeetingDay').innerText // "20"
   // 2) raccolgo il meeting time dal form
+  const meetingTime = document.getElementById('newMeetingTime').value // "20:30"
   // 3) raccolgo il meeting name dal form
+  const meetingName = document.getElementById('newMeetingName').value // "Cena di lavoro"
   // 4) combino time e name in una stringa tipo "17:00 - Debrief"
+  const meetingString = meetingTime + ' - ' + meetingName // `${meetingTime} - ${meetingName}` --> "20:30 - Cena di lavoro"
   // 5) inserisco questa stringa in uno degli array dentro appointments, in quello corrispondente al giorno selezionato
+  // trovo l'indice corretto dentro appointments, in base al giorno selezionato
+  const rightIndexForAppointments = parseInt(selectedDay) - 1 // 19
+  // pusho il mio evento nel cassettino corretto
+  console.log('APPOINTMENTS PRIMA DEL SALVATAGGIO', appointments)
+  appointments[rightIndexForAppointments].push(meetingString)
+  console.log('APPOINTMENTS DOPO IL SALVATAGGIO', appointments)
+
+  // creiamo il pallino e aggiungiamolo al giorno in cui abbiamo pushato l'evento
+  const dot = document.createElement('span')
+  dot.classList.add('dot')
+  // trovo la cella selezionata
+  const selectedCell = document.querySelector('.selected')
+  if (!selectedCell.querySelector('.dot')) {
+    // se c'è già un dot dentro .selected, non ri-aggiungerlo!
+    selectedCell.appendChild(dot)
+  }
+  showAppointments(rightIndexForAppointments)
 }
 
 printCurrentMonthInH1()
